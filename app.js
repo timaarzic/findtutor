@@ -79,7 +79,7 @@ function requireAdmin() {
 function createAdmin() {
   _loadUsers(function(users) {
     if (users.find(function(u) { return u.role === 'admin' })) {
-      alert('Админ уже существует!\nEmail: admin@findtutor.ru\nПароль: admin123')
+      alert('Админ уже существует!')
       return
     }
     var admin = { id: Date.now(), firstName: 'Админ', lastName: '', email: 'admin@findtutor.ru', password: 'admin123', role: 'admin' }
