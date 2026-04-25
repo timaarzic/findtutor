@@ -1,11 +1,11 @@
-var firebaseConfig = {
-  apiKey:            "ВСТАВЬ_СЮДА",
-  authDomain:        "ВСТАВЬ_СЮДА",
-  projectId:         "ВСТАВЬ_СЮДА",
-  storageBucket:     "ВСТАВЬ_СЮДА",
-  messagingSenderId: "ВСТАВЬ_СЮДА",
-  appId:             "ВСТАВЬ_СЮДА"
-}
+const firebaseConfig = {
+    apiKey: "AIzaSyCsFu4-1w2bZAG3OZPt3pcIBDdQVPtcjvg",
+    authDomain: "findtutor-e2403.firebaseapp.com",
+    projectId: "findtutor-e2403",
+    storageBucket: "findtutor-e2403.firebasestorage.app",
+    messagingSenderId: "741579317921",
+    appId: "1:741579317921:web:4e2ee1c61419fde6c6c6e0"
+  };
 
 var _db = null
 
