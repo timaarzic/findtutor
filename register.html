@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Регистрация — FindTutor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header__inner">
+      <a href="index.html" class="logo">Find<span>Tutor</span></a>
+      <nav class="nav"></nav>
+      <div class="header__btns"><a href="login.html" class="btn btn--outline">Войти</a></div>
+    </div>
+  </header>
+  <div class="auth-page">
+    <div class="auth-box" style="max-width:480px">
+      <div class="auth-box__title">Регистрация</div>
+      <div class="auth-box__sub">Создай аккаунт — это бесплатно</div>
+      <div class="role-tabs">
+        <button class="role-tab active" id="tabS" onclick="setRole('student')">Я ученик</button>
+        <button class="role-tab" id="tabT" onclick="setRole('tutor')">Я репетитор</button>
+      </div>
+      <div id="errMsg" class="alert alert--error"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Имя</label><input class="form-input" id="firstName" placeholder="Иван"></div>
+        <div class="form-group"><label class="form-label">Фамилия</label><input class="form-input" id="lastName" placeholder="Петров"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="email" placeholder="your@email.com"></div>
+      <div class="form-group"><label class="form-label">Пароль</label><input type="password" class="form-input" id="password" placeholder="Минимум 6 символов"></div>
+      <div id="tutorFields" style="display:none">
+        <div class="form-group"><label class="form-label">Телефон</label><input type="tel" class="form-input" id="phone" placeholder="+7 (999) 000-00-00"><div class="form-hint">Ученики будут видеть его в анкете</div></div>
+        <div class="form-group"><label class="form-label">Предмет</label>
+          <select class="form-select" id="subject">
+            <option value="">Выбери предмет</option>
+            <option>Математика</option><option>Русский язык</option><option>Физика</option>
+            <option>Химия</option><option>Английский язык</option><option>История</option><option>Информатика</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Цена за урок (₽/час)</label><input type="number" class="form-input" id="price" placeholder="700" min="100"></div>
+        <div class="form-group">
+          <label class="form-label">Документ об образовании</label>
+          <label class="file-upload-label">
+            <span>📎</span><span id="fileName">Прикрепи аттестат или диплом</span>
+            <input type="file" id="docFile" accept=".pdf,.jpg,.jpeg,.png" onchange="document.getElementById('fileName').textContent=this.files[0]?this.files[0].name:'Прикрепи аттестат или диплом'">
+          </label>
+          <div class="form-hint">PDF, JPG, PNG</div>
+        </div>
+        <div class="alert alert--warning">После регистрации администратор проверит документ. Анкета сразу видна со статусом «на проверке».</div>
+      </div>
+      <button class="btn btn--primary form-submit" id="submitBtn" onclick="doRegister()" data-tip="Бесплатная регистрация">Создать аккаунт</button>
+      <div class="auth-box__link">Уже есть аккаунт? <a href="login.html">Войти</a></div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="app.js"></script>
+  <script>
+    var curUser = getCurrent()
+    if (curUser) window.location.href = curUser.role === 'admin' ? 'admin.html' : 'cabinet.html'
+
+    var currentRole = 'student'
+    function setRole(role) {
+      currentRole = role
+      document.getElementById('tabS').classList.toggle('active', role==='student')
+      document.getElementById('tabT').classList.toggle('active', role==='tutor')
+      document.getElementById('tutorFields').style.display = role==='tutor' ? 'block' : 'none'
+      document.getElementById('submitBtn').textContent = role==='tutor' ? 'Создать анкету репетитора' : 'Создать аккаунт'
+    }
+
+    function doRegister() {
+      var f = document.getElementById('firstName').value.trim()
+      var l = document.getElementById('lastName').value.trim()
+      var e = document.getElementById('email').value.trim()
+      var p = document.getElementById('password').value
+      if (!f||!l) { showError('errMsg','Введи имя и фамилию'); return }
+      if (!e)     { showError('errMsg','Введи email'); return }
+      if (p.length < 6) { showError('errMsg','Пароль минимум 6 символов'); return }
+      if (currentRole === 'tutor') {
+        if (!document.getElementById('phone').value.trim())   { showError('errMsg','Укажи телефон'); return }
+        if (!document.getElementById('subject').value)        { showError('errMsg','Выбери предмет'); return }
+        if (!document.getElementById('docFile').files[0])     { showError('errMsg','Прикрепи документ об образовании'); return }
+      }
+      var users = getUsers()
+      if (users.find(function(u){ return u.email===e })) { showError('errMsg','Email уже занят'); return }
+      var nu = {
+        id: Date.now(), firstName:f, lastName:l, email:e, password:p, role:currentRole,
+        phone:   currentRole==='tutor' ? document.getElementById('phone').value.trim() : '',
+        subject: currentRole==='tutor' ? document.getElementById('subject').value : '',
+        price:   currentRole==='tutor' ? document.getElementById('price').value : '',
+        format:'online', about:'', city:'', verified:false, rating:0
+      }
+      saveUser(nu)
+      localStorage.setItem(FT_CUR, JSON.stringify(nu))
+      window.location.href = 'cabinet.html'
+    }
+  </script>
+</body>
+</html>

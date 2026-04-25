@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FindTutor — найди своего репетитора</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header__inner">
+      <a href="index.html" class="logo">Find<span>Tutor</span></a>
+      <nav class="nav">
+        <a href="tutors.html" class="nav__link">Репетиторы</a>
+        <a href="become.html" class="nav__link">Стать репетитором</a>
+      </nav>
+      <div class="header__btns" id="headerBtns"></div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero__inner">
+      <div class="hero__text">
+        <h1 class="hero__title">Найди репетитора<br><span>за 5 минут</span></h1>
+        <p class="hero__sub">Все репетиторы подтверждают образование документами. Выбирай по предмету, цене и городу.</p>
+        <form class="search-bar" action="tutors.html" method="get">
+          <select name="subject" class="search-bar__select">
+            <option value="">Предмет</option>
+            <option>Математика</option><option>Русский язык</option><option>Физика</option>
+            <option>Химия</option><option>Английский язык</option><option>История</option><option>Информатика</option>
+          </select>
+          <input type="text" name="city" placeholder="Город" class="search-bar__input">
+          <button class="btn btn--primary" type="submit" data-tip="Перейти к поиску">Найти</button>
+        </form>
+      </div>
+      <div class="hero__img">
+        <div class="hero__card">
+          <div class="hero__card-icon">🎓</div>
+          <div>
+            <div class="hero__card-name">Только проверенные</div>
+            <div class="hero__card-sub">Документ об образовании обязателен</div>
+          </div>
+        </div>
+        <div class="hero__card hero__card--2">
+          <div class="hero__card-icon">💬</div>
+          <div>
+            <div class="hero__card-name">Пишите напрямую</div>
+            <div class="hero__card-sub">Контакты открыты в анкете</div>
+          </div>
+        </div>
+        <div class="hero__card hero__card--3">
+          <div class="hero__card-icon">⭐</div>
+          <div>
+            <div class="hero__card-name">Отзывы учеников</div>
+            <div class="hero__card-sub">Реальные оценки после занятий</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="how">
+    <div class="container">
+      <h2 class="section-title">Как это работает</h2>
+      <div class="how__steps">
+        <div class="how__step"><div class="how__num">01</div><h3>Ищи репетитора</h3><p>Фильтруй по предмету, городу и цене. Смотри анкеты и отзывы.</p></div>
+        <div class="how__step"><div class="how__num">02</div><h3>Пиши напрямую</h3><p>Контакты открыты — пишешь на почту или звонишь сам.</p></div>
+        <div class="how__step"><div class="how__num">03</div><h3>Занимайся</h3><p>После занятий оставь отзыв — помогает другим ученикам.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="popular">
+    <div class="container">
+      <h2 class="section-title">Репетиторы на сайте</h2>
+      <div class="tutors-grid" id="popularGrid"></div>
+      <div id="popularEmpty" style="display:none;text-align:center;padding:52px 0">
+        <div style="font-size:52px;margin-bottom:14px">🎓</div>
+        <div style="font-size:19px;font-weight:700;margin-bottom:10px">Репетиторов пока нет</div>
+        <p style="color:var(--text-muted);margin-bottom:24px;max-width:360px;margin-left:auto;margin-right:auto">Стань первым — зарегистрируйся и создай анкету. Ученики уже ищут репетиторов.</p>
+        <a href="become.html" class="btn btn--primary btn--lg" data-tip="Займёт 3 минуты">Стать первым репетитором</a>
+      </div>
+      <div id="popularMore" style="display:none;text-align:center;margin-top:32px">
+        <a href="tutors.html" class="btn btn--outline btn--lg">Смотреть всех репетиторов</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="container cta__inner">
+      <div>
+        <h2>Ты репетитор?</h2>
+        <p>Создай анкету бесплатно. Загрузи аттестат или диплом — и ученики найдут тебя.</p>
+      </div>
+      <a href="become.html" class="btn btn--white" data-tip="Займёт 3 минуты">Создать анкету</a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div class="logo">Find<span>Tutor</span></div>
+      <div class="footer__links">
+        <a href="tutors.html">Репетиторы</a>
+        <a href="become.html">Стать репетитором</a>
+        <a href="login.html">Войти</a>
+      </div>
+      <div class="footer__copy">© 2026 FindTutor</div>
+      <div class="footer__author">Разработано студентом — <span>Timur Arzyev</span> · 1-25.ИСИП.ОД.9</div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="app.js"></script>
+  <script>
+    updateHeader()
+    document.addEventListener('ft:ready', function() {
+      var tutors = getTutors()
+      if (tutors.length === 0) {
+        document.getElementById('popularEmpty').style.display = 'block'
+      } else {
+        document.getElementById('popularGrid').innerHTML = tutors.slice(0,4).map(renderTutorCard).join('')
+        if (tutors.length > 4) document.getElementById('popularMore').style.display = 'block'
+      }
+    })
+  </script>
+</body>
+</html>

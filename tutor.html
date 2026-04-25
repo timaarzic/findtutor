@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Анкета репетитора — FindTutor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header__inner">
+      <a href="index.html" class="logo">Find<span>Tutor</span></a>
+      <nav class="nav">
+        <a href="tutors.html" class="nav__link">Репетиторы</a>
+        <a href="become.html" class="nav__link">Стать репетитором</a>
+      </nav>
+      <div class="header__btns" id="headerBtns"></div>
+    </div>
+  </header>
+
+  <div style="padding:14px 0;background:#fff;border-bottom:1px solid var(--border)">
+    <div class="container"><a href="tutors.html" style="color:var(--text-muted);font-size:14px">← Все репетиторы</a></div>
+  </div>
+
+  <section class="tutor-page">
+    <div class="container tutor-page__inner" id="tutorContent">
+      <div style="text-align:center;padding:80px 0;color:var(--text-muted)">Загрузка...</div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div class="logo">Find<span>Tutor</span></div>
+      <div class="footer__links">
+        <a href="tutors.html">Репетиторы</a>
+        <a href="become.html">Стать репетитором</a>
+      </div>
+      <div class="footer__copy">© 2026 FindTutor</div>
+      <div class="footer__author">Разработано студентом — <span>Timur Arzyev</span> · 1-25.ИСИП.ОД.9</div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="app.js"></script>
+  <script>
+    updateHeader()
+    var tutorId = parseInt(getParam('id'))
+    var tutor   = null
+
+    document.addEventListener('ft:ready', function() {
+      tutor = getUsers().find(function(u){ return u.id === tutorId && u.role === 'tutor' })
+      if (!tutor) {
+      document.getElementById('tutorContent').innerHTML =
+        '<div style="text-align:center;padding:80px 0"><div style="font-size:48px;margin-bottom:14px">😕</div>' +
+        '<div style="font-size:18px;font-weight:700;margin-bottom:10px">Анкета не найдена</div>' +
+        '<a href="tutors.html" class="btn btn--primary">Вернуться к списку</a></div>'
+      } else {
+        renderProfile()
+      }
+    })
+
+    function renderProfile() {
+      getReviews(tutorId, function(revs) {
+      document.title = tutor.firstName + ' ' + tutor.lastName + ' — FindTutor'
+      var c   = avatarColor(tutor.firstName)
+      var ini = initials(tutor.firstName, tutor.lastName)
+      var verBlock = tutor.verified
+        ? '<span class="badge-verified" style="font-size:13px;padding:4px 12px">✓ Верифицирован</span>'
+        : '<span class="badge-pending"  style="font-size:13px;padding:4px 12px">⏳ На проверке</span>'
+      var revsHTML = revs.length === 0
+        ? '<div style="color:var(--text-muted);font-size:14px;padding:10px 0">Отзывов пока нет. Будь первым!</div>'
+        : revs.map(function(r) {
+            return '<div class="review">' +
+              '<div class="review__top">' +
+                '<div class="review__avatar">' + (r.name ? r.name[0].toUpperCase() : '?') + '</div>' +
+                '<div class="review__name">' + escHtml(r.name) + '</div>' +
+                '<div class="review__stars">' + starsHTML(r.rating) + '</div>' +
+              '</div>' +
+              '<p class="review__text">' + escHtml(r.text) + '</p>' +
+              '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' + (r.date||'') + '</div>' +
+            '</div>'
+          }).join('')
+
+      var cur = getCurrent()
+      var alreadyReviewed = cur && revs.some(function(r){ return r.userId === cur.id })
+      var reviewFormHTML = alreadyReviewed
+        ? '<div class="alert alert--success">Ты уже оставил отзыв на этого репетитора.</div>'
+        : '<div id="rvFormBlock">' +
+            '<div class="form-group"><label class="form-label">Твоё имя</label>' +
+              '<input class="form-input" id="rvName" placeholder="Иван" value="' + (cur ? escHtml(cur.firstName) : '') + '"></div>' +
+            '<div class="form-group"><label class="form-label">Оценка</label>' +
+              '<div id="starPicker" style="display:flex;gap:6px;font-size:28px;cursor:pointer" data-sel="0"></div></div>' +
+            '<div class="form-group"><textarea class="form-input" id="rvText" rows="3" placeholder="Расскажи как прошли занятия..."></textarea></div>' +
+            '<button class="btn btn--primary" onclick="submitReview()" data-tip="Отправить отзыв">Отправить отзыв</button>' +
+          '</div>' +
+          '<div id="rvThanks" style="display:none" class="alert alert--success">Спасибо! Отзыв добавлен.</div>'
+
+      document.getElementById('tutorContent').innerHTML =
+        '<aside class="tutor-sidebar">' +
+          '<div class="tutor-sidebar__avatar" style="background:' + c.bg + ';color:' + c.color + '">' + ini + '</div>' +
+          '<div class="tutor-sidebar__name">' + escHtml(tutor.firstName) + ' ' + escHtml(tutor.lastName) + '</div>' +
+          '<div style="margin-bottom:10px">' + verBlock + '</div>' +
+          '<div class="tutor-sidebar__subject">' + escHtml(tutor.subject || 'Предмет не указан') + '</div>' +
+          '<div class="tutor-sidebar__price">' + (tutor.price ? escHtml(tutor.price) + ' ₽/час' : 'Цена не указана') + '</div>' +
+          '<div class="tutor-sidebar__stars">' +
+            (tutor.rating && tutor.rating > 0 ? starsHTML(tutor.rating) + ' ' + tutor.rating.toFixed(1) : 'Нет оценок') +
+            (revs.length ? ' <span style="color:var(--text-muted);font-size:12px">(' + revs.length + ' отзывов)</span>' : '') +
+          '</div>' +
+          '<div class="tutor-sidebar__contacts">' +
+            (tutor.city  ? '<div class="tutor-sidebar__contact"><strong>Город:</strong> '   + escHtml(tutor.city)  + '</div>' : '') +
+            '<div class="tutor-sidebar__contact"><strong>Формат:</strong> ' + formatLabel(tutor.format) + '</div>' +
+            (tutor.phone ? '<div class="tutor-sidebar__contact"><strong>Телефон:</strong> ' + escHtml(tutor.phone) + '</div>' : '') +
+            '<div class="tutor-sidebar__contact"><strong>Email:</strong> ' + escHtml(tutor.email) + '</div>' +
+          '</div>' +
+          (tutor.phone ? '<a href="tel:' + escHtml(tutor.phone) + '" class="btn btn--primary" data-tip="Позвонить">Позвонить</a>' : '') +
+          '<a href="mailto:' + escHtml(tutor.email) + '" class="btn btn--outline" data-tip="Написать на email">Написать на почту</a>' +
+        '</aside>' +
+        '<div class="tutor-main">' +
+          '<div class="tutor-block"><h3>О себе</h3><p>' + (escHtml(tutor.about) || 'Репетитор пока не написал о себе.') + '</p></div>' +
+          '<div class="tutor-block"><h3>Предмет и формат</h3>' +
+            '<div style="margin-top:6px">' +
+              (tutor.subject ? '<span class="tag">' + escHtml(tutor.subject) + '</span>' : '') +
+              '<span class="tag" style="background:#d3f9d8;color:#1e6e30">' + formatLabel(tutor.format) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="tutor-block">' +
+            '<h3>Отзывы учеников</h3>' + revsHTML +
+            '<div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--border)">' +
+              '<h4 style="font-size:15px;font-weight:700;margin-bottom:12px">Оставить отзыв</h4>' +
+              reviewFormHTML +
+            '</div>' +
+          '</div>' +
+        '</div>'
+
+      if (!alreadyReviewed) initStarPicker()
+      })
+    }
+
+    function initStarPicker() {
+      var picker = document.getElementById('starPicker')
+      if (!picker) return
+      for (var i = 1; i <= 5; i++) {
+        (function(v) {
+          var s = document.createElement('span')
+          s.textContent = '☆'; s.style.color = '#ccc'
+          s.addEventListener('click', function() {
+            picker.dataset.sel = v
+            Array.from(picker.children).forEach(function(x,xi){ x.textContent=xi<v?'★':'☆'; x.style.color=xi<v?'#f59e0b':'#ccc' })
+          })
+          s.addEventListener('mouseover', function() {
+            Array.from(picker.children).forEach(function(x,xi){ x.style.color=xi<v?'#f59e0b':'#ccc' })
+          })
+          picker.appendChild(s)
+        })(i)
+      }
+      picker.addEventListener('mouseleave', function() {
+        var sel = parseInt(picker.dataset.sel || 0)
+        Array.from(picker.children).forEach(function(x,xi){ x.style.color=xi<sel?'#f59e0b':'#ccc' })
+      })
+    }
+
+    function submitReview() {
+      var name   = document.getElementById('rvName').value.trim()
+      var text   = document.getElementById('rvText').value.trim()
+      var picker = document.getElementById('starPicker')
+      var sel    = parseInt(picker ? picker.dataset.sel || 0 : 0)
+      if (!name) { alert('Напиши своё имя'); return }
+      if (!sel)  { alert('Поставь оценку');  return }
+      if (!text) { alert('Напиши отзыв');    return }
+
+      var cur  = getCurrent()
+      getReviews(tutorId, function(revs) {
+        revs.push({ userId: cur ? cur.id : null, name: name, rating: sel, text: text, date: new Date().toLocaleDateString('ru') })
+        saveReviews(tutorId, revs, function() {
+          var avg = revs.reduce(function(s,r){ return s+r.rating }, 0) / revs.length
+          tutor.rating = Math.round(avg * 10) / 10
+          saveUser(tutor)
+          document.getElementById('rvFormBlock').style.display = 'none'
+          document.getElementById('rvThanks').style.display    = 'block'
+        })
+      })
+    }
+  </script>
+</body>
+</html>

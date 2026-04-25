@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Личный кабинет — FindTutor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header__inner">
+      <a href="index.html" class="logo">Find<span>Tutor</span></a>
+      <nav class="nav">
+        <a href="tutors.html" class="nav__link">Репетиторы</a>
+        <a href="become.html" class="nav__link">Стать репетитором</a>
+      </nav>
+      <div class="header__btns" id="headerBtns"></div>
+    </div>
+  </header>
+
+  <section class="cabinet-page">
+    <div class="container cabinet-page__inner">
+      <aside class="cabinet-menu" id="sideMenu"></aside>
+      <div class="cabinet-content" id="cabContent"></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div class="logo">Find<span>Tutor</span></div>
+      <div class="footer__links">
+        <a href="tutors.html">Репетиторы</a>
+        <a href="become.html">Стать репетитором</a>
+      </div>
+      <div class="footer__copy">© 2026 FindTutor</div>
+      <div class="footer__author">Разработано студентом — <span>Timur Arzyev</span> · 1-25.ИСИП.ОД.9</div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="app.js"></script>
+  <script>
+    var user = requireAuth()
+    if (user && user.role === 'admin') window.location.href = 'admin.html'
+    updateHeader()
+
+    var activeTab = 'profile'
+    var tabs = [{ id:'profile', label:'👤 Профиль' }]
+    if (user && user.role === 'tutor') {
+      tabs.push({ id:'anketa', label:'📋 Моя анкета' })
+      tabs.push({ id:'docs',   label:'📄 Документы' })
+    }
+    tabs.push({ id:'favs', label:'⭐ Избранное' })
+
+    function renderMenu() {
+      document.getElementById('sideMenu').innerHTML = tabs.map(function(t) {
+        return '<a class="cabinet-menu__link' + (t.id===activeTab?' active':'') + '" onclick="setTab(\''+t.id+'\');return false" href="#">' + t.label + '</a>'
+      }).join('')
+    }
+
+    function setTab(id) { activeTab=id; renderMenu(); renderContent() }
+
+    function renderContent() {
+      var u = getCurrent()
+      var html = ''
+
+      if (activeTab === 'profile') {
+        html = '<div class="cabinet-block"><h3>Мой профиль</h3>' +
+          '<div class="form-row">' +
+            '<div class="form-group"><label class="form-label">Имя</label><input class="form-input" id="eFirst" value="'+escHtml(u.firstName)+'"></div>' +
+            '<div class="form-group"><label class="form-label">Фамилия</label><input class="form-input" id="eLast" value="'+escHtml(u.lastName)+'"></div>' +
+          '</div>' +
+          '<div class="form-group"><label class="form-label">Email</label><input class="form-input" value="'+escHtml(u.email)+'" disabled></div>' +
+          '<div class="form-group"><label class="form-label">Роль</label><input class="form-input" value="'+(u.role==='tutor'?'Репетитор':'Ученик')+'" disabled></div>' +
+          '<button class="btn btn--primary" onclick="saveProfile()" data-tip="Сохранить изменения">Сохранить</button>' +
+          '<div id="profileSaved" style="display:none;margin-top:10px" class="alert alert--success">Сохранено!</div>' +
+          '</div>'
+      }
+
+      if (activeTab === 'anketa') {
+        var statusBlock = u.verified
+          ? '<div class="alert alert--success" style="margin-bottom:14px">✓ Верификация пройдена — анкета видна в поиске</div>'
+          : '<div class="alert alert--warning" style="margin-bottom:14px">⏳ Документы на проверке. Анкета уже видна в поиске со статусом «на проверке».</div>'
+        var subjects = ['Математика','Русский язык','Физика','Химия','Английский язык','История','Информатика']
+        html = '<div class="cabinet-block"><h3>Моя анкета</h3>' + statusBlock +
+          '<div class="form-group"><label class="form-label">Предмет</label>' +
+          '<select class="form-select" id="eSubject">' + subjects.map(function(s){ return '<option'+(u.subject===s?' selected':'')+'>'+s+'</option>' }).join('') + '</select></div>' +
+          '<div class="form-group"><label class="form-label">Цена за урок (₽/час)</label><input type="number" class="form-input" id="ePrice" value="'+escHtml(u.price||'')+'" min="100"></div>' +
+          '<div class="form-group"><label class="form-label">Город</label><input class="form-input" id="eCity" value="'+escHtml(u.city||'')+'" placeholder="Москва"></div>' +
+          '<div class="form-group"><label class="form-label">Телефон</label><input class="form-input" id="ePhone" value="'+escHtml(u.phone||'')+'"></div>' +
+          '<div class="form-group"><label class="form-label">Формат занятий</label>' +
+          '<select class="form-select" id="eFormat">' +
+            '<option value="online"'+(u.format==='online'?' selected':'')+'>Онлайн</option>' +
+            '<option value="offline"'+(u.format==='offline'?' selected':'')+'>Очно</option>' +
+            '<option value="both"'+(u.format==='both'?' selected':'')+'>Онлайн и очно</option>' +
+          '</select></div>' +
+          '<div class="form-group"><label class="form-label">О себе</label><textarea class="form-input" id="eAbout" rows="4" placeholder="Расскажи об опыте...">'+escHtml(u.about||'')+'</textarea></div>' +
+          '<button class="btn btn--primary" onclick="saveAnketa()" data-tip="Сохранить анкету">Сохранить анкету</button>' +
+          ' <a href="tutor.html?id='+u.id+'" class="btn btn--outline" data-tip="Посмотреть как видят ученики">Посмотреть анкету →</a>' +
+          '<div id="anketaSaved" style="display:none;margin-top:10px" class="alert alert--success">Анкета сохранена!</div>' +
+          '</div>'
+      }
+
+      if (activeTab === 'docs') {
+        html = '<div class="cabinet-block"><h3>Документы</h3>' +
+          (u.verified
+            ? '<div class="alert alert--success" style="margin-bottom:14px">✓ Документ проверен и принят.</div>'
+            : '<div class="alert alert--warning" style="margin-bottom:14px">⏳ Документ загружен и ожидает проверки администратором.</div>') +
+          '<div class="form-group"><label class="form-label">Загрузить новый документ</label>' +
+          '<label class="file-upload-label"><span>📎</span><span id="newDocName">Аттестат или диплом</span>' +
+          '<input type="file" accept=".pdf,.jpg,.png" onchange="document.getElementById(\'newDocName\').textContent=this.files[0]?this.files[0].name:\'Аттестат или диплом\'"></label>' +
+          '<div class="form-hint" style="margin-top:6px">Если загрузишь новый документ — верификация начнётся заново.</div></div>' +
+          '</div>'
+      }
+
+      if (activeTab === 'favs') {
+        html = '<div class="cabinet-block"><h3>Избранное</h3>' +
+          '<div style="color:var(--text-muted);font-size:14px;padding:14px 0">Ты ещё не смотрел анкеты репетиторов. <a href="tutors.html" style="color:var(--blue)">Перейти к поиску →</a></div>' +
+          '</div>'
+      }
+
+      document.getElementById('cabContent').innerHTML = html
+    }
+
+    function saveProfile() {
+      var u = getCurrent()
+      u.firstName = document.getElementById('eFirst').value.trim()
+      u.lastName  = document.getElementById('eLast').value.trim()
+      if (!u.firstName) { alert('Введи имя'); return }
+      saveUser(u); updateHeader()
+      document.getElementById('profileSaved').style.display = 'block'
+      setTimeout(function(){ document.getElementById('profileSaved').style.display='none' }, 2500)
+    }
+
+    function saveAnketa() {
+      var u = getCurrent()
+      u.subject = document.getElementById('eSubject').value
+      u.price   = document.getElementById('ePrice').value
+      u.city    = document.getElementById('eCity').value.trim()
+      u.phone   = document.getElementById('ePhone').value.trim()
+      u.format  = document.getElementById('eFormat').value
+      u.about   = document.getElementById('eAbout').value.trim()
+      saveUser(u)
+      document.getElementById('anketaSaved').style.display = 'block'
+      setTimeout(function(){ document.getElementById('anketaSaved').style.display='none' }, 2500)
+    }
+
+    renderMenu()
+    renderContent()
+  </script>
+</body>
+</html>

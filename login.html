@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход — FindTutor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header__inner">
+      <a href="index.html" class="logo">Find<span>Tutor</span></a>
+      <nav class="nav"></nav>
+      <div class="header__btns"><a href="register.html" class="btn btn--primary">Регистрация</a></div>
+    </div>
+  </header>
+
+  <div class="auth-page">
+    <div class="auth-box">
+      <div class="auth-box__title">Добро пожаловать</div>
+      <div class="auth-box__sub">Войди в свой аккаунт</div>
+      <div id="errMsg" class="alert alert--error"></div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="email" placeholder="your@email.com"></div>
+      <div class="form-group"><label class="form-label">Пароль</label><input type="password" class="form-input" id="password" placeholder="••••••••"></div>
+      <button class="btn btn--primary form-submit" onclick="doLogin()" data-tip="Войти в личный кабинет">Войти</button>
+      <div class="auth-box__link">Нет аккаунта? <a href="register.html">Зарегистрироваться</a></div>
+      <div style="margin-top:22px;padding-top:16px;border-top:1px solid var(--border);text-align:center">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Первый запуск — создай администратора:</div>
+        <button class="btn btn--outline" style="font-size:12px" onclick="createAdmin()" data-tip="Email: admin@findtutor.ru / Пароль: admin123">Создать администратора</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="app.js"></script>
+  <script>
+    var cur = getCurrent()
+    if (cur) window.location.href = cur.role === 'admin' ? 'admin.html' : 'cabinet.html'
+
+    document.getElementById('password').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin() })
+
+    function doLogin() {
+      var email = document.getElementById('email').value.trim()
+      var pass  = document.getElementById('password').value
+      if (!email || !pass) { showError('errMsg','Заполни все поля'); return }
+      _loadUsers(function(users) {
+        var u = users.find(function(x){ return x.email===email && x.password===pass })
+        if (!u) { showError('errMsg','Неверный email или пароль'); return }
+        localStorage.setItem(FT_CUR, JSON.stringify(u))
+        window.location.href = u.role === 'admin' ? 'admin.html' : 'cabinet.html'
+      })
+    }
+  </script>
+</body>
+</html>

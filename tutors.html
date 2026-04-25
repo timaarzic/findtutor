@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Репетиторы — FindTutor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="container header__inner">
+      <a href="index.html" class="logo">Find<span>Tutor</span></a>
+      <nav class="nav">
+        <a href="tutors.html" class="nav__link active">Репетиторы</a>
+        <a href="become.html" class="nav__link">Стать репетитором</a>
+      </nav>
+      <div class="header__btns" id="headerBtns"></div>
+    </div>
+  </header>
+
+  <div class="page-hero">
+    <div class="container">
+      <h1>Репетиторы</h1>
+      <div class="filters">
+        <select id="fSubject" class="form-select" style="width:auto" onchange="doFilter()">
+          <option value="">Все предметы</option>
+          <option>Математика</option><option>Русский язык</option><option>Физика</option>
+          <option>Химия</option><option>Английский язык</option><option>История</option><option>Информатика</option>
+        </select>
+        <select id="fFormat" class="form-select" style="width:auto" onchange="doFilter()">
+          <option value="">Любой формат</option>
+          <option value="online">Онлайн</option>
+          <option value="offline">Очно</option>
+        </select>
+        <select id="fPrice" class="form-select" style="width:auto" onchange="doFilter()">
+          <option value="">Любая цена</option>
+          <option value="low">До 700 ₽</option>
+          <option value="mid">700–1000 ₽</option>
+          <option value="high">От 1000 ₽</option>
+        </select>
+        <select id="fSort" class="form-select" style="width:auto" onchange="doFilter()">
+          <option value="rating">По рейтингу</option>
+          <option value="price_asc">Сначала дешевле</option>
+          <option value="price_desc">Сначала дороже</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <section class="tutors-list-section">
+    <div class="container">
+      <div id="tutorsList" class="tutors-list"></div>
+      <div id="noTutors" style="display:none;text-align:center;padding:64px 0">
+        <div style="font-size:48px;margin-bottom:14px">🎓</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:10px">Репетиторов пока нет</div>
+        <p style="color:var(--text-muted);margin-bottom:24px">Стань первым — зарегистрируйся и создай анкету</p>
+        <a href="become.html" class="btn btn--primary btn--lg">Стать репетитором</a>
+      </div>
+      <div id="noResults" style="display:none;text-align:center;padding:56px 0">
+        <div style="font-size:40px;margin-bottom:12px">🔍</div>
+        <div style="font-size:16px;font-weight:600">Никого не нашли</div>
+        <div style="font-size:14px;margin-top:8px;color:var(--text-muted)">Попробуй другие фильтры</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div class="logo">Find<span>Tutor</span></div>
+      <div class="footer__links">
+        <a href="tutors.html">Репетиторы</a>
+        <a href="become.html">Стать репетитором</a>
+        <a href="login.html">Войти</a>
+      </div>
+      <div class="footer__copy">© 2026 FindTutor</div>
+      <div class="footer__author">Разработано студентом — <span>Timur Arzyev</span> · 1-25.ИСИП.ОД.9</div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="app.js"></script>
+  <script>
+    updateHeader()
+    document.addEventListener('ft:ready', function() {
+      if (getTutors().length === 0) {
+        document.getElementById('noTutors').style.display = 'block'
+      } else {
+        doFilter()
+      }
+    })
+
+    function doFilter() {
+      var subject = document.getElementById('fSubject').value
+      var format  = document.getElementById('fFormat').value
+      var price   = document.getElementById('fPrice').value
+      var sort    = document.getElementById('fSort').value
+
+      var list = getTutors().filter(function(t) {
+        var okS = !subject || (t.subject||'').toLowerCase().includes(subject.toLowerCase())
+        var okF = matchFormat(t.format, format)
+        var p   = parseInt(t.price) || 0
+        var okP = true
+        if (price === 'low')  okP = p > 0 && p <= 700
+        if (price === 'mid')  okP = p > 700 && p <= 1000
+        if (price === 'high') okP = p > 1000
+        return okS && okF && okP
+      })
+
+      if (sort === 'price_asc')  list.sort(function(a,b){ return (parseInt(a.price)||0)-(parseInt(b.price)||0) })
+      if (sort === 'price_desc') list.sort(function(a,b){ return (parseInt(b.price)||0)-(parseInt(a.price)||0) })
+      if (sort === 'rating')     list.sort(function(a,b){ return (b.rating||0)-(a.rating||0) })
+
+      document.getElementById('noTutors').style.display  = 'none'
+      document.getElementById('noResults').style.display = list.length === 0 ? 'block' : 'none'
+      document.getElementById('tutorsList').innerHTML    = list.length === 0 ? '' : list.map(renderTutorRow).join('')
+    }
+  </script>
+</body>
+</html>
